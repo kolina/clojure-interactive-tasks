@@ -15,11 +15,11 @@
 ;;; It always returns PI / 2 (missile is launched straight up).
 ;;; You can either calculate answer or find it by trying and adjusting different angles.
 (defn plane-static-solution []
-  (* 0.5 Math/PI))
+  (double 1.8444338679593))
 
 ;;; Here's a function that will show you animation with plane you launching missiles.
 ;;; You need to pass your solution (function name) to this function and run this file.
-(plane-static plane-static-solution)
+;;;(plane-static plane-static-solution)
 
 
 
@@ -33,12 +33,15 @@
 ;;; pl-x, pl-y - player's (your) coordinates.
 ;;; trg-x trg-y - target's coordinates.
 ;;; Run and see how it launches missile now and then fix it to hit the plane.
-(defn plane-dynamic-solution [pl-x pl-y trg-x trg-y]
-  (Math/atan2 (- trg-y pl-y) (- trg-x pl-x)))
+(defn plane-dynamic-solution [x1 y1 x2 y2]
+  (let [x (- x1 x2) y (- y2 y1) t(/ (- (Math/sqrt (+ (* 4(* x x)) (* 3 (* y y)))) x) 15)]
+(if (zero? t) 0 (let [sin (/ y (* 10 t)) cos (/ (- (* 5 t) x) (* 10 t))]
+(if (pos? sin) (if (pos? cos) (Math/asin sin) (Math/acos cos))  (if (pos? cos) (Math/asin sin) (- (* (-1) Math/PI) (Math/asin sin)))
+)))))
 
 ;;; To run program uncomment - remove ';' symbol before '(plane-dynamic ...)'
 ;;; And also comment previous task - add ';' symbol before '(plane-static ...)'
-; (plane-dynamic plane-dynamic-solution)
+;;; (plane-dynamic plane-dynamic-solution)
 
 
 
@@ -51,18 +54,30 @@
 ;;; Your position x = 0, y = 0.
 ;;; Missile speed stays the same as before.
 ;;; You need to write function that takes no arguments and returns angle to launch missile at.
+(defn ufo-static-solution[]
+(double 0.886340422598))
 
 ;;; Now you don't have template function, so write one yourself.
 ;;; Hint: try to pass random angle at first e.g. 0.5 and see how it works.
 ;;; To run program uncomment it (and comment others) and pass your function to it.
-; (ufo-static YOUR_SOLUTION)
+;;;(ufo-static ufo-static-solution)
 
 
 
 ;;; Same UFO, but now it appears at random position (same as plane-dynamic).
 ;;; Your position is also changing.
 ;;; You need to write function that takes 4 arguments: your position (x, y)  and UFO's position (x, y).
-; (ufo-dynamic YOUR_SOLUTION)
+(defn ufo-dynamic-solution[x1 y1 x2 y2]
+(let [x (- x2 x1) y (- y2 y1)]
+(let [d (double (Math/sqrt (-(* (- y 1000)(- y 1000)) (+ (* x x)(* y y)))))]
+(if (neg? d) 0
+(let [T (double (- (- 1000 y) d))]
+(let [t (double (Math/sqrt (* 20 T)))]
+(let [cos (double (/ x (* 10 t))) sin (double (/ (+ y (/ (* (double 0.1) (* t t)) 2)) (* 10 t) ))]
+(if (pos? sin) (if (pos? cos) (Math/asin sin) (Math/acos cos))  (if (pos? cos) (Math/asin sin) (- (* (-1) Math/PI) (Math/asin sin)))
+))))))))
+
+(ufo-dynamic ufo-dynamic-solution)
 
 
 
