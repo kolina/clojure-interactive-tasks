@@ -18,10 +18,10 @@
 
 (defn higher? [{suit-a :suit rank-a :rank}
                {suit-b :suit rank-b :rank}
-               trump]
+               tramp]
   (if (= suit-a suit-b)
     (> rank-a rank-b)
-    (= suit-a trump)))
+    (= suit-a tramp)))
 
 (defn draw-cards [{:keys [players deck attacker] :as state}]
   (let [players (mapv #(remove nil? %) players)
@@ -37,13 +37,15 @@
     (draw-cards {:player-fns [player-a player-b]
                  :table []
                  :deck deck
-                 :trump (:suit (last deck))
+                 :tramp (:suit (last deck))
                  :attacker (rand-int 2)
-                 :players [[] []]})))
+                 :players [[] []]
+		 :rest []})))
 
-(defn discard [{:keys [table players attacker] :as state}]
+(defn discard [{:keys [table players attacker rest] :as state}]
   {:pre [(even? (count table))]}
   (-> state
+      (update-in [:rest] conj table)
       (assoc-in [:table] [])
       (update-in [:attacker] op)
       draw-cards))
@@ -58,12 +60,14 @@
 (defn contains-rank? [table {:keys [rank]}]
   (some #(= rank (:rank %)) table))
 
-(defn call-player-fn [type {:keys [attacker players player-fns table trump]}]
+(defn call-player-fn [type {:keys [attacker players player-fns table tramp rest deck]}]
   (let [player-ind (if (= type :attack) attacker (op attacker))]
     ((get-in player-fns [player-ind type])
      {:table table
       :hand (remove nil? (players player-ind))
-      :trump trump})))
+      :tramp tramp
+      :rest rest
+      :deck-count (count deck)})))
 
 (defn throw-iae [& args]
   (throw (IllegalArgumentException. (apply str args))))
@@ -81,13 +85,13 @@
          ". Attacker doesn't have such card: "
          (players attacker))))
 
-(defn validate-defend-card [card {:keys [attacker players table trump]}]
+(defn validate-defend-card [card {:keys [attacker players table tramp]}]
   (when (every? #(not= card %) (players (op attacker)))
     (throw-iae "Can't defend with "
                card
                ". Defender doesn't have such card: "
                (players (op attacker))))
-  (when-not (higher? card (last table) trump)
+  (when-not (higher? card (last table) tramp)
     (throw-iae "Can't defend with "
                card
                ". It's lower than attack card: "
@@ -116,11 +120,11 @@
         (discard state)
         ;;; Defender has at least 1 card. Attack continues.
         (if-let [card (call-player-fn :attack state)]
-          ;;; Attacker selected card for attack.
-          (do (validate-attack-card card state)
-              (move-to-table card attacker state))
-          ;;; Attacker select no card for attach. End of attack.
-          (discard state)))
+         ;;; Attacker selected card for attack.
+         (do (validate-attack-card card state)
+             (move-to-table card attacker state))
+         ;;; Attacker select no card for attach. End of attack.
+         (discard state)))
      ;;; Defend
      (if-let [card (call-player-fn :defend state)]
        ;;; Defender selected card for defense.
