@@ -11,8 +11,15 @@
 ;;; In this task snake is not growing after it ate an apple so there is no danger of snake hitting itself.
 ;;; Note: upper left corner cell is (0, 0).
 
+;;;(defn my_run-not-grow [v1 v2]
+;;;    (let [x1 (first v1) y1 (last v1) x2 (first v2) y2(last v2)]
+;;;     (if (= x1 x2) 
+;;;            (if (< y1 y2) :down :up)
+;;;            (if (< x1 x2) :right :left)
+;;;)))
+
 ;;; Uncomment and substitute your solution
-; (run-not-grow YOUR_SOLUTION_HERE)
+;;;(run-not-grow my_run-not-grow)
 
 
 
@@ -26,7 +33,7 @@
 ;;; Wait, you can change direction but snake will die :\
 
 ;;; Uncomment and substitute your solution
-; (run-grow YOUR_SOLUTION_HERE)
+;;;(run-grow my_run-grow)
 
 
 
@@ -45,5 +52,42 @@
 ;;; Each wall is a cell that snake is not allowed to  move to.
 ;;; Wall is a vector of x and y.
 
+(defn get-neighb[cell]
+  (let [dir [[0 1] [0 -1] [-1 0] [1 0]]]
+   (map #(map + cell %) dir)))
+
+(defn is-any-equal [cell other-cells]
+  (some #(and (= (first cell) (first %)) (= (last cell) (last %)))
+        other-cells))
+
+(defn non-border [[x y]]
+  (and (>= x 0) (>= y 0) (< x 40) (< y 30)))
+
+(defn find-next [cell forb-cells]
+  (->> cell
+       (get-neighb)
+       (remove #(is-any-equal % forb-cells))
+       (filter non-border)))
+
+(defn get-first-steps [head forb-cells]
+  (let [dir [:down :up :left :right] coord [[0 1][0 -1][-1 0][1 0]]
+    	neighb (map #(vector %1 (map + head %2)) dir coord)]
+	(->> neighb
+    	(remove #(is-any-equal (last %) forb-cells))
+         (filter #(non-border (last %))))))
+
+(defn my-run-with-walls[body apples walls]
+  (let [head (first body) used-cells (concat body walls)]
+    (loop [forb-cells used-cells
+           q (get-first-steps head used-cells)]
+      (let [elem (first q)]
+        (if (is-any-equal (last elem) apples)
+          (first elem)
+		  (let [new-cells (map #(vector (first elem) %)
+                                       (find-next (last elem) forb-cells))]
+            (recur (concat forb-cells (map last new-cells))
+                   (concat (rest q) new-cells)
+      )))))))
+
 ;;; Uncomment and substitute your solution
-; (run-with-walls YOUR_SOLUTION_HERE)
+ (run-with-walls my-run-with-walls)
