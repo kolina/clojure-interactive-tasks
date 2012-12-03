@@ -12,11 +12,62 @@
 ;;; Note that you don't get k - number of clusters. You need to specify it somewhere in function.
 ;;; To test you solution use following tests:
 
+(defn dist [p1 p2]
+    (+ (* (- (first p1) (first p2)) (- (first p1) (first p2)))
+       (* (- (second p1) (second p2)) (- (second p1) (second p2)))))
+
+(defn my-min [point cent-1 cent-2]
+    (let [defl-1 (dist point cent-1) defl-2 (dist point cent-2)]
+        (< defl-1 defl-2)))
+
+(defn find-center [centers point k]
+    (reduce #(if (my-min point (nth centers %1) (nth centers %2)) %1 %2)
+	0 (range 1 k))) 
+
+(defn transf-clust [v centers k]
+    (map #(find-center centers % k) v))
+
+(defn div [point n]
+    (vector (/ (first point) n) (/ (second point) n)))
+
+(defn plus [p1 p2]
+    (vector (+ (first p1) (first p2)) (+ (second p1) (second p2))))
+
+(defn count-centers-mass [v numb-clust k]
+    (loop [sum-points (zipmap (range k) (for [m (range k)] [0 0]))
+	   numb-points (zipmap (range k) (for [m (range k)] 0))
+           pos 0]
+          (if (= pos (count v))
+	      (map #(div (sum-points %) (max (numb-points %) 1)) (range k))
+	      (recur (assoc sum-points (nth numb-clust pos) (plus (sum-points 
+                                              (nth numb-clust pos))
+                                                  (nth v pos)))
+		     (assoc numb-points (nth numb-clust pos)
+               (inc (numb-points (nth numb-clust pos))))
+		     (inc pos)))))
+
+(defn form-ans [v numb-clust k]
+    (loop [clusters (zipmap (range k) (for [m (range k)] []))
+           pos 0]
+	(if (= pos (count v))
+	    (into [] (vals clusters))
+	    (recur (assoc clusters (nth numb-clust pos)
+                 (conj (clusters (nth numb-clust pos)) (nth v pos)))
+		   (inc pos)))))
+
+(defn k-means [k v]
+    (loop [numb-clust (for [m (range (count v))] (rand-int k))
+           centers (count-centers-mass v numb-clust k)]
+	   (let [new-clust (transf-clust v centers k)]
+	       (if (= numb-clust new-clust)
+		   (form-ans v numb-clust k)
+		   (recur new-clust (count-centers-mass v new-clust k))))))
+
 ; (run-empty SOLUTION)
 
 ; (run-2-circles SOLUTION)
 
-; (run-3-circles SOLUTION)
+(run-3-circles #(k-means 3 %))
 
 ;;; Manipulation: mouse click - add new point
 ;;;               space - reset simulation (remove all points or regenerate them, depenends on test)

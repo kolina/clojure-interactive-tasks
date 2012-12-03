@@ -1,0 +1,28 @@
+(defn neighb[v]
+  (let [x (first v) y (second v)]
+  	(zipmap [:right :left :up :down] [[(inc x) y]  [(dec x) y] [x (inc y)]
+      [x (dec y)]])))
+
+(defn is-match[v cell]
+  (some #(= % cell) v))
+
+(defn bfs[snake apples walls used]
+  (if (is-match apples (first snake))
+    {:up 0 #{(first snake)}}
+    (let [possible (neighb (first snake))]
+      (let [rez (into {} (->> possible (remove #(is-match snake (val %)))
+           (remove #(is-match walls (second %)))
+		   (remove #(is-match used (second %)))))]
+      	(let [d (into {} (map #({(first %)
+                (inc
+                 	(val (bfs (conj (reverse (rest (reverse snake)))
+                               (last %))
+                   		  apples walls
+                         (into '() (concat (vals rez) used)))))}) 
+                              (into [] rez)))]
+          (reduce #(if (< (val %1) (val %2)) %1 %2) {} d))))))
+
+(bfs '([1 1][2 1][2 2]) '([3 4]) '([0 1]) '([1 1]))
+
+(defn my-solution[snake apples walls]
+  (key (bfs snake apples walls '(first snake))))
