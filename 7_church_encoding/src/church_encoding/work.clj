@@ -24,7 +24,13 @@
 
 ;;; Implement + (plus) for church numerals.
 
-(def plus :YOUR_IMPLEMENTATION_HERE)
+(defn PLUS[m]
+    (fn [n]
+        (fn [f]
+            (fn [x]
+		((m f) ((n f) x))))))
+
+(def plus PLUS)
 
 (to-normal-num ((plus church-2) church-2)) ; must return 4
 
@@ -34,7 +40,12 @@
 
 ;;; Implement * (multiplication) for church numerals
 
-(def mult :YOUR_IMPLEMENTATION_HERE)
+(defn MULT[m]
+    (fn [n]
+	(fn [f]
+	    (m (n f)))))
+
+(def mult MULT)
 
 (to-normal-num ((mult church-2) church-5)) ; must return 10
 
@@ -44,7 +55,11 @@
 
 ;;; Implement ^ (pow function) for church numerals.
 
-(def pow :YOUR_IMPLEMENTATION_HERE)
+(defn POW[a]
+    (fn [x]
+	(x a)))
+
+(def pow POW)
 
 (to-normal-num ((pow church-2) church-5)) ; must return 32
 
@@ -54,7 +69,38 @@
 
 ;;; Implement dec function for church numerals.
 
-(def dec :YOUR_IMPLEMENTATION_HERE)
+(defn TRUE[x]
+    (fn[y] x))
+
+(defn FALSE[x]
+    (fn [y] y))
+
+(defn PAIR [x]
+    (fn [y]
+	(fn [f]
+	    ((f x) y))))
+
+(defn FIRST [p]
+    (p TRUE))
+
+(defn SECOND [p]
+    (p FALSE))
+
+(defn INC[n]
+    (fn [f]
+	(fn [x]
+	    (f ((n f) x)))))
+
+(defn INC-SHIFT[p]
+    ((PAIR (SECOND p)) (INC (SECOND p))))
+
+(def church-0 (to-church-num 0))
+(def church-1 (to-church-num 1))
+
+(defn DEC[n]
+    (FIRST ((n INC-SHIFT) ((PAIR church-0) church-0))))
+
+(def dec DEC)
 
 (to-normal-num (dec church-5)) ; must return 4
 
@@ -66,7 +112,16 @@
 ;;; You'll need to use recursion here. For recursion you'll need lazy values.
 ;;; You can use delay for that: http://clojuredocs.org/clojure_core/1.2.0/clojure.core/delay
 
-(def sum :YOUR_IMPLEMENTATION_HERE)
+(defn IS-ZERO [n]
+    ((n (fn [x] FALSE)) TRUE))
+
+(defn Y[f] ((fn [x] (f (fn[v] ((x x) v))))
+            (fn [x] (f (fn[v] ((x x) v))))))
+
+(defn SUM-N[n] ((Y (fn [f] (fn [n] @( ((IS-ZERO n) (delay church-0)) 
+                             (delay ((PLUS n) (f (DEC n)))) )  ))) n))
+
+(def sum SUM-N)
 
 (to-normal-num (sum church-2)) ; must return 3
 
@@ -83,23 +138,35 @@
 ;;;
 ;;; Help: http://en.wikipedia.org/wiki/Church_encoding#List_encodings
 
-(def empty? :YOUR_IMPLEMENTATION_HERE)
+(def NIL ((PAIR TRUE) TRUE) )
 
-(def empty-list :YOUR_IMPLEMENTATION_HERE)
+(defn EMPTY?[l] (FIRST l))
 
-(def head :YOUR_IMPLEMENTATION_HERE)
+(def EMPTY-LIST NIL)
 
-(def tail :YOUR_IMPLEMENTATION_HERE)
+(defn HEAD[l] (FIRST (SECOND l)))
 
-(def cons :YOUR_IMPLEMENTATION_HERE)
+(defn TAIL[l] (SECOND (SECOND l)))
+
+(defn CONS[h] (fn [t] ((PAIR FALSE) ((PAIR h) t))))
+
+(def empty? EMPTY?)
+
+(def empty-list EMPTY-LIST)
+
+(def head HEAD)
+
+(def tail TAIL)
+
+(def cons CONS)
 
 (((empty? empty-list) true) false) ; must return true
 
-(head (cons "Hello" empty-list)) ; must return "Hello"
+;(head (cons "Hello" empty-list)) ; must return "Hello"
 
-(let [list (cons "Hello" empty-list)
-      t (tail list)]
-  ((empty? t) true) false) ; must return true
+;(let [list (cons "Hello" empty-list)
+;      t (tail list)]
+;  ((empty? t) true) false) ; must return true
 
 (test-list {:empty? empty?
             :empty-list empty-list
