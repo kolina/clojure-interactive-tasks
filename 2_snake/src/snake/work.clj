@@ -54,10 +54,10 @@
 
 (defn get-neighb[cell]
   (let [dir [[0 1] [0 -1] [-1 0] [1 0]]]
-   (map #(map + cell %) dir)))
+   (map #(into [] (map + cell %)) dir)))
 
 (defn is-any-equal [cell other-cells]
-  (some #(and (= (first cell) (first %)) (= (last cell) (last %)))
+  (some #(= cell %)
         other-cells))
 
 (defn non-border [[x y]]
@@ -66,26 +66,26 @@
 (defn find-next [cell forb-cells]
   (->> cell
        (get-neighb)
-       (remove #(is-any-equal % forb-cells))
+       (remove forb-cells)
        (filter non-border)))
 
 (defn get-first-steps [head forb-cells]
   (let [dir [:down :up :left :right] coord [[0 1][0 -1][-1 0][1 0]]
-    	neighb (map #(vector %1 (map + head %2)) dir coord)]
+    	neighb (map #(vector %1 (into [] (map + head %2))) dir coord)]
 	(->> neighb
-    	(remove #(is-any-equal (last %) forb-cells))
+    	(remove #(forb-cells (last %)))
          (filter #(non-border (last %))))))
 
 (defn my-run-with-walls[body apples walls]
-  (let [head (first body) used-cells (concat body walls)]
-    (loop [forb-cells used-cells
+  (let [head (first body) used-cells (into #{} (concat body walls))]
+    (loop [forb-cells (into #{} used-cells)
            q (get-first-steps head used-cells)]
       (let [elem (first q)]
         (if (is-any-equal (last elem) apples)
           (first elem)
 		  (let [new-cells (map #(vector (first elem) %)
                                        (find-next (last elem) forb-cells))]
-            (recur (concat forb-cells (map last new-cells))
+            (recur (clojure.set/union forb-cells (into #{} (map last new-cells)))
                    (concat (rest q) new-cells)
       )))))))
 
