@@ -28,7 +28,27 @@
 ;;; (derivative '(sin (* 2 x))) => (* 2 (cos (* 2 x))) or it's equilavent.
 
 (defn derivative [expr]
-  expr)
+  (cond (coll? expr)
+      (let [c (count expr)
+            t (first expr)]
+        (cond (= c 2) (cond (= t 'sin) (list '* (list 'cos (last expr)) (derivative (last expr)))
+                            (= t 'cos) (list '* (list '- 0 (list 'sin (last expr))) (derivative (last expr)))
+                            :else (list '/ (derivative (last expr)) (last expr)))
+              :else	   (cond (= t '+) (list '+ (derivative (second expr))
+                                                (derivative (last expr)))
+                             (= t '-) (list '- (derivative (second expr))
+                                                (derivative (last expr)))
+                             (= t '*) (list '+ (list '* (second expr)
+                                                            (derivative (last expr)))
+                                                (list '* (last expr)
+                                                            (derivative (second expr))))
+                             :else (list '/ (list '- 
+                                                  (list '* (last expr)
+                                                            (derivative (second expr)))
+                                                  (list '* (second expr)
+                                                            (derivative (last expr))))
+                                            (list * (last expr) (last expr))))))
+:else (if (symbol? expr) 1 0)))
 
 
 ;;; Tests.
@@ -39,14 +59,14 @@
   (let [f '(* x x)]
     (view (expr-plot -10 10 f (derivative f)))))
 
-;(test-simple)
+(test-simple)
 
 (defn test-second-derivative []
   "f = x^2"
   (let [f '(* x x)]
     (view (expr-plot -10 10 f (derivative f) (derivative (derivative f))))))
 
-;(test-second-derivative)
+(test-second-derivative)
 
 (defn test-complex []
   "f = -7x^2 + 2x + 5"
@@ -55,7 +75,7 @@
               5)]
     (view (expr-plot -5 5 f (derivative f) (derivative (derivative f))))))
 
-;(test-complex)
+(test-complex)
 
 (defn test-division []
   "f = 1/(1 + x^2"
@@ -63,18 +83,18 @@
                    1))]
     (view (expr-plot -4 4 f (derivative f)))))
 
-;(test-division)
+(test-division)
 
 (defn test-trigonometry []
   "f = sin(2x)"
   (let [f '(sin (* 2 x))]
     (view (expr-plot (- Math/PI) Math/PI  f (derivative f) (derivative (derivative f))))))
 
-;(test-trigonometry)
+(test-trigonometry)
 
 (defn test-logarithm []
   "f = log(1 + x^2)"
   (let [f '(log (+ 1 (* x x)))]
     (view (expr-plot -4 4 f (derivative f)))))
 
-;(test-logarithm)
+(test-logarithm)
